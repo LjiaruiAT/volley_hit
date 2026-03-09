@@ -19,6 +19,7 @@
 #include "math.h"
 #include "motor.h"
 #include "motorEx.h"
+#include "cylinder.h"
 #define Remote_BT_0_WIFI_1 1
 
 #if !Remote_BT_0_WIFI_1
