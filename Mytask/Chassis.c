@@ -42,45 +42,45 @@ void Remote(void *pvParameters)
 {
 	portTickType xLastWakeTime = xTaskGetTickCount();
 
-	vesc1.Kp =0.950f;
-	vesc1.Ki = 0.0001f;
-	vesc1.Kd = 4.220f;
-	vesc1.limit = 100000.0f;
-	vesc1.output_limit = 60.0f;
-	vesc2.Kp =0.950f;
-	vesc2.Ki = 0.0001f;
-	vesc2.Kd = 4.220f;
-	vesc2.limit = 100000.0f;
-	vesc2.output_limit = 60.0f;
-	vesc3.Kp =0.950f;
-	vesc3.Ki = 0.0001f;
-	vesc3.Kd = 4.220f;
+	vesc1.Kp =0.0f;
+	vesc1.Ki = 0.0f;
+	vesc1.Kd = 0.0f;
+	vesc1.limit = 10000.0f;
+	vesc1.output_limit = 40.0f;
+	vesc2.Kp =0.0f;
+	vesc2.Ki = 0.0f;
+	vesc2.Kd = 0.0f;
+	vesc2.limit = 10000.0f;
+	vesc2.output_limit = 40.0f;
+	vesc3.Kp =0.0f;
+	vesc3.Ki = 0.0f;
+	vesc3.Kd = 0.0f;
 	vesc3.limit = 100000.0f;
-	vesc3.output_limit = 60.0f;
+	vesc3.output_limit = 40.0f;
 
 	for(;;)
 	{
-			Vx = - remote_to_velocity(&Remote_Control.Ex);
-			Vy = - remote_to_velocity(&Remote_Control.Ey);
-    	    Wz =   remote_to_Omega(&Remote_Control.Eomega);
+		Vx = - remote_to_velocity(&Remote_Control.Ey);
+		Vy = - remote_to_velocity(&Remote_Control.Ex);
+        Wz =   remote_to_Omega(&Remote_Control.Eomega);
 
-			v1 = -Vx -LENGTH * Wz;
-			v2 = -Vx*0.5f+ Vy*(sqrt (3.0f)/2.0)+LENGTH * Wz;
-			v3 = -Vx*0.5f-Vy*(sqrt (3.0f)/2.0)+LENGTH * Wz;
+		v1 = -Vx*0.5f+ Vy*(sqrt (3.0f)/2.0)+LENGTH * Wz;
+		v2 = -Vx*0.5f- Vy*(sqrt (3.0f)/2.0)+LENGTH * Wz;
+        v3 =  Vx +LENGTH * Wz;
 
-			wheel_one=  (int16_t)((v1 / (2.0f * PI * WHEEL_RADIUS)) );
-			wheel_two=  (int16_t)((v2 / (2.0f * PI * WHEEL_RADIUS)) );
-			wheel_three=-(int16_t)((v3 /(2.0f * PI * WHEEL_RADIUS)) );
+		wheel_one=  -(int16_t)((v1 / (2.0f * PI * WHEEL_RADIUS)) );
+		wheel_two=  (int16_t)((v2 / (2.0f * PI * WHEEL_RADIUS)) );
+		wheel_three=-(int16_t)((v3 /(2.0f * PI * WHEEL_RADIUS)) );
 			
-			PID_Control2((float)(steering1.epm / 7.0f/(3.4f)), (wheel_one   ), &vesc1);
-			PID_Control2((float)(steering2.epm / 7.0f/(3.4f)), (wheel_two   ), &vesc2);
-			PID_Control2((float)(steering3.epm / 7.0f/(3.4f)), (wheel_three ), &vesc3);
+		PID_Control2((float)(steering1.epm / 7.0f/(3.4f)), (wheel_one   ), &vesc1);
+		PID_Control2((float)(steering2.epm / 7.0f/(3.4f)), (wheel_two   ), &vesc2);
+		PID_Control2((float)(steering3.epm / 7.0f/(3.4f)), (wheel_three ), &vesc3);
 
-            VESC_SetCurrent(&steering1, vesc1.pid_out);
-            VESC_SetCurrent(&steering2, vesc2.pid_out);
-            VESC_SetCurrent(&steering3, vesc3.pid_out);
+		VESC_SetCurrent(&steering1, vesc1.pid_out);
+		VESC_SetCurrent(&steering2, vesc2.pid_out);
+		VESC_SetCurrent(&steering3, vesc3.pid_out);
 
-		    vTaskDelayUntil(&xLastWakeTime,2);
+		vTaskDelayUntil(&xLastWakeTime,2);
 	}
 }
 
