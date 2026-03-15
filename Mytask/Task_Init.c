@@ -13,9 +13,11 @@ ChassisMode chassis_mode = REMOTE;
 void Task_Init()
 {
 	//Ò£¿ØÆ÷
-	//    __HAL_UART_ENABLE_IT(&huart4, UART_IT_IDLE);
-	//    HAL_UART_Receive_DMA(&huart4, usart4_dma_buff, sizeof(usart4_dma_buff));
+//	    __HAL_UART_ENABLE_IT(&huart4, UART_IT_IDLE);
+//	    HAL_UART_Receive_DMA(&huart4, usart4_dma_buff, sizeof(usart4_dma_buff));
 	
+	    __HAL_UART_ENABLE_IT(&huart5, UART_IT_IDLE);
+      HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5_buff, sizeof(usart5_buff));
 //	xTaskCreate(Remote,
 //         "Remote",
 //          400,
@@ -46,21 +48,21 @@ void Move_Task(void *pvParameters)
 	{
 			if(xSemaphoreTake(remote_semaphore, pdMS_TO_TICKS(200)) == pdTRUE)
 			{
-					memcpy(&RemoteData, usart4_dma_buff, sizeof(RemoteData));
-					Updatakey(&Remote_Control);
-					Remote_Control.Ex =-RemoteData.rocker[1];
-					Remote_Control.Ey = RemoteData.rocker[0];
-					Remote_Control.Eomega = RemoteData.rocker[2];
-					Remote_Control.mode = RemoteData.rocker[3];
-					Remote_Control.Key_Control = &RemoteData.Key;
+					memcpy(&recv_data, usart5_buff, sizeof(recv_data));
+					Updatakey(&recv_pack);
+					recv_pack.Ex =-recv_data.rocker[1];
+					recv_pack.Ey = recv_data.rocker[0];
+					recv_pack.Eomega = recv_data.rocker[2];
+					recv_pack.mode = recv_data.rocker[3];
+					recv_pack.Key_Control = &recv_data.Key;
 			}else{
-					Remote_Control.Ex = 0;
-					Remote_Control.Ey = 0;
-					Remote_Control.Eomega = 0;
-					Remote_Control.mode = 0;
+					recv_pack.Ex = 0;
+					recv_pack.Ey = 0;
+					recv_pack.Eomega = 0;
+					recv_pack.mode = 0;
 					//°´¼ü×´Ì¬ÇåÁã
-					memset(&RemoteData.Key, 0, sizeof(hw_key_t));
-					Remote_Control.Key_Control = &RemoteData.Key;
+					memset(&recv_data.Key, 0, sizeof(hw_key_t));
+					recv_pack.Key_Control = &recv_data.Key;
 			}
 	}
 }

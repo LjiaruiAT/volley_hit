@@ -42,31 +42,31 @@ void Remote(void *pvParameters)
 {
 	portTickType xLastWakeTime = xTaskGetTickCount();
 
-	vesc1.Kp =0.0f;
+	vesc1.Kp =7.0f;
 	vesc1.Ki = 0.0f;
-	vesc1.Kd = 0.0f;
+	vesc1.Kd = 40.0f;
 	vesc1.limit = 10000.0f;
 	vesc1.output_limit = 40.0f;
-	vesc2.Kp =0.0f;
+	vesc2.Kp =7.0f;
 	vesc2.Ki = 0.0f;
-	vesc2.Kd = 0.0f;
+	vesc2.Kd = 40.0f;
 	vesc2.limit = 10000.0f;
 	vesc2.output_limit = 40.0f;
-	vesc3.Kp =0.0f;
+	vesc3.Kp =7.0f;
 	vesc3.Ki = 0.0f;
-	vesc3.Kd = 0.0f;
+	vesc3.Kd = 40.0f;
 	vesc3.limit = 100000.0f;
 	vesc3.output_limit = 40.0f;
 
 	for(;;)
 	{
-		Vx = - remote_to_velocity(&Remote_Control.Ey);
-		Vy = - remote_to_velocity(&Remote_Control.Ex);
-        Wz =   remote_to_Omega(&Remote_Control.Eomega);
+		Vx = - remote_to_velocity(&recv_pack.Ey);
+		Vy = - remote_to_velocity(&recv_pack.Ex);
+    Wz =   remote_to_Omega(&recv_pack.Eomega);
 
 		v1 = -Vx*0.5f+ Vy*(sqrt (3.0f)/2.0)+LENGTH * Wz;
 		v2 = -Vx*0.5f- Vy*(sqrt (3.0f)/2.0)+LENGTH * Wz;
-        v3 =  Vx +LENGTH * Wz;
+    v3 =  Vx +LENGTH * Wz;
 
 		wheel_one=  -(int16_t)((v1 / (2.0f * PI * WHEEL_RADIUS)) );
 		wheel_two=  (int16_t)((v2 / (2.0f * PI * WHEEL_RADIUS)) );
@@ -86,7 +86,7 @@ void Remote(void *pvParameters)
 
 bool is_remote_active(void)
 {
-    return abs(Remote_Control.mode) > 10;
+    return abs(recv_pack.mode) > 10;
 }
 
 float remote_to_velocity(int16_t *remote_value) {
@@ -115,3 +115,45 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	VESC_ReceiveHandler(&steering2, &hcan2, ID,Recv);
 	VESC_ReceiveHandler(&steering3, &hcan2, ID,Recv);
     }
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
+{
+	if (huart->Instance == UART5)
+	{
+		HAL_UART_DMAStop(&huart5);
+		Comm_UART_IRQ_Handle(g_comm_handle, &huart5, usart5_buff,size);
+		HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5_buff,sizeof(usart5_buff));
+   		__HAL_DMA_DISABLE_IT(huart5.hdmarx, DMA_IT_HT);
+	}
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == UART5)
+    {
+        HAL_UART_DMAStop(huart);
+        // 重置HAL状态
+        huart->ErrorCode = HAL_UART_ERROR_NONE;
+        huart->RxState = HAL_UART_STATE_READY;
+        huart->gState = HAL_UART_STATE_READY;
+        
+        // 然后清除错误标志 - 按照STM32F4参考手册要求的顺序
+        uint32_t isrflags = READ_REG(huart->Instance->SR);
+        
+        // 按顺序处理各种错误标志，必须先读SR再读DR来清除错误
+        if (isrflags & (USART_SR_ORE | USART_SR_NE | USART_SR_FE)) 
+        {
+            // 对于ORE、NE、FE错误，需要先读SR再读DR
+            volatile uint32_t temp_sr = READ_REG(huart->Instance->SR);
+            volatile uint32_t temp_dr = READ_REG(huart->Instance->DR); // 这个读取会清除ORE、NE、FE        
+
+        if (isrflags & USART_SR_PE)
+        {
+            volatile uint32_t temp_sr = READ_REG(huart->Instance->SR);
+        }
+        
+    }
+      Comm_UART_IRQ_Handle(g_comm_handle, &huart5, usart5_buff, 0);
+      HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5_buff,sizeof(usart5_buff));
+      __HAL_DMA_DISABLE_IT(huart5.hdmarx, DMA_IT_HT);
+    }
+}

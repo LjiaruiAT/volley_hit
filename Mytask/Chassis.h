@@ -1,6 +1,6 @@
 #ifndef _REMOTE_H_
 #define _REMOTE_H_
-
+#include "comm_stm32_hal_middle.h"
 #include "Task_Init.h"
 #include <stdbool.h>
 
@@ -32,5 +32,9 @@ float remote_to_Omega(int16_t *remote_value);
 
 uint8_t GetDriverID(uint16_t std_id);
 int32_t RAMP_slf( int32_t final, int32_t now, int32_t ramp );
+
+
+
+
 
 #endif

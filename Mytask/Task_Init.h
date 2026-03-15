@@ -1,8 +1,5 @@
 #ifndef _TASK_INIT_H_
 #define _TASK_INIT_H_
-#include "485_bus.h"
-#include "crc_ccitt.h"
-#include "go_motor.h"
 #include "RMLibHead.h"
 #include "main.h"
 #include "FreeRTOS.h"
@@ -104,11 +101,14 @@ typedef enum{
     AUTO,
 }ChassisMode;
 
-extern uint8_t usart4_dma_buff[30]; //串口接收数据
-
-extern UART_DataPack RemoteData;  //将串口接收的数据存到这里
-extern Remote_Handle_t Remote_Control; //取出遥控器数据
+//extern uint8_t usart4_dma_buff[30]; //串口接收数据
+//extern UART_DataPack RemoteData;  //将串口接收的数据存到这里
+//extern Remote_Handle_t Remote_Control; //取出遥控器数据
 extern ChassisMode chassis_mode;
+extern uint8_t usart5_buff[30];
+extern UART_DataPack recv_data;
+extern Remote_Handle_t recv_pack;
+
 
 void Updatakey(Remote_Handle_t * xx);
 void Move_Task(void *pvParameters);
