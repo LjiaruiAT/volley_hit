@@ -17,6 +17,8 @@
 #include "motor.h"
 #include "motorEx.h"
 #include "cylinder.h"
+#include "comm_stm32_hal_middle.h"
+
 #define Remote_BT_0_WIFI_1 1
 
 #if !Remote_BT_0_WIFI_1
@@ -115,5 +117,6 @@ void Move_Task(void *pvParameters);
 void Task_Init(void);
 extern TaskHandle_t Hit_Task_Handle;
 extern void Hit_Task(void *pvParameters);
+extern 	Remote_Handle_t Remote_Control;
 
 #endif
