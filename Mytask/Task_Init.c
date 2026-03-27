@@ -1,33 +1,4 @@
-#include "RMLibHead.h"
 #include "Task_Init.h"
-#include "can.h"
-#include "Chassis.h"
-#include "CANDrive.h"
-#include "semphr.h"
-#include "comm.h"
-#include "dataFrame.h"
-extern SemaphoreHandle_t Jy61_semaphore;
-extern SemaphoreHandle_t remote_semaphore;
-extern SemaphoreHandle_t Remote_semaphore;
-extern JY61_Typedef JY61;
-PackControl_t recv_pack;
-Remote_Handle_t Remote_Control; //取出遥控器数据
-TaskHandle_t Remote_Jy61_Task_Handle;
-TaskHandle_t Remote_Handle;
-//Chassis_t chassis;
-uint8_t recv_buff[20] = {0};
-PackControl_t recv_pack_remote;
-uint8_t usart4_dma_buff[30];
-uint8_t usart5_dma_buff[30];
-ChassisMode chassis_mode = REMOTE;
-float rocker_filter[4] = {0};
-GPIO_PinState GPIOA8_State = GPIO_PIN_SET;
-GPIO_PinState GPIOC9_State = GPIO_PIN_SET;
-int take = 1;
-TaskHandle_t Hit_Task_Handle;
-GPIO_PinState key1, key2, key3;
-uint8_t hit_ball_trigger = 0;
-uint8_t flag = 0;
 void Task_Init()
 {
 
@@ -157,16 +128,7 @@ VESC_INIT vesc_3 ={
 	
 	
 };
-float Vx =0;  
-float Vy =0;  
-float Wz =0;  
-volatile float v1 = 0.0f;
-volatile float v2 = 0.0f;
-volatile float v3 = 0.0f;
-volatile float wheel_one = 0.0f; 
-volatile float wheel_two = 0.0f; 
-volatile float wheel_three=0.0f; 
-TaskHandle_t Remote_Handle;
+
 void Remote(void *pvParameters)
 {
 	portTickType xLastWakeTime = xTaskGetTickCount();
