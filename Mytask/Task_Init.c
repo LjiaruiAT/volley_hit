@@ -21,7 +21,13 @@ uint8_t usart4_dma_buff[30];
 uint8_t usart5_dma_buff[30];
 ChassisMode chassis_mode = REMOTE;
 float rocker_filter[4] = {0};
-
+GPIO_PinState GPIOA8_State = GPIO_PIN_SET;
+GPIO_PinState GPIOC9_State = GPIO_PIN_SET;
+int take = 1;
+TaskHandle_t Hit_Task_Handle;
+GPIO_PinState key1, key2, key3;
+uint8_t hit_ball_trigger = 0;
+uint8_t flag = 0;
 void Task_Init()
 {
 
@@ -151,15 +157,15 @@ VESC_INIT vesc_3 ={
 	
 	
 };
-float Vx =0;   //前后移动
-float Vy =0;   //左右移动
-float Wz =0;   //顺逆自转
+float Vx =0;  
+float Vy =0;  
+float Wz =0;  
 volatile float v1 = 0.0f;
 volatile float v2 = 0.0f;
 volatile float v3 = 0.0f;
-volatile float wheel_one = 0.0f;  //前左
-volatile float wheel_two = 0.0f;  //前右
-volatile float wheel_three=0.0f;  //后右
+volatile float wheel_one = 0.0f; 
+volatile float wheel_two = 0.0f; 
+volatile float wheel_three=0.0f; 
 TaskHandle_t Remote_Handle;
 void Remote(void *pvParameters)
 {
@@ -189,8 +195,7 @@ void Remote(void *pvParameters)
 
 	for(;;)
 	{
-    float roll = JY61.Angle.Roll;
-    float pitch = JY61.Angle.Pitch;
+
 		
 		v1 = -Remote_Control.Ex*0.5f+ Remote_Control.Ey*(sqrt (3.0f)/2.0)+LENGTH * Remote_Control.Eomega;
 		v2 = -Remote_Control.Ex*0.5f- Remote_Control.Ey*(sqrt (3.0f)/2.0)+LENGTH * Remote_Control.Eomega;
@@ -200,14 +205,14 @@ void Remote(void *pvParameters)
 		wheel_two=   (int16_t)((v2 / (2.0f * PI * WHEEL_RADIUS)) );
 		wheel_three=-(int16_t)((v3 / (2.0f * PI * WHEEL_RADIUS)) );
 			
-		PID_Control2((float)((float)vesc_1.steer.epm / 7.0f/(3.4f)), (wheel_one   ), &vesc_1.PID);
-		PID_Control2((float)((float)vesc_2.steer.epm / 7.0f/(3.4f)), (wheel_two   ), &vesc_2.PID);
-		PID_Control2((float)((float)vesc_3.steer.epm / 7.0f/(3.4f)), (wheel_three ), &vesc_3.PID);
+		PID_Control2((float)((float)vesc_1.steer.epm / 7.0f/(3.4f)), (0   ), &vesc_1.PID);
+		PID_Control2((float)((float)vesc_2.steer.epm / 7.0f/(3.4f)), (0   ), &vesc_2.PID);
+		PID_Control2((float)((float)vesc_3.steer.epm / 7.0f/(3.4f)), (0 ), &vesc_3.PID);
 
 		
-	    VESC_SetCurrent(&vesc_1.steer, vesc_1.PID_ERROR.output);
-        VESC_SetCurrent(&vesc_2.steer, vesc_2.PID_ERROR.output);
-	    VESC_SetCurrent(&vesc_3.steer, vesc_3.PID_ERROR.output);
+	    VESC_SetCurrent(&vesc_1.steer, vesc_1.PID.pid_out);
+        VESC_SetCurrent(&vesc_2.steer, vesc_2.PID.pid_out);
+	    VESC_SetCurrent(&vesc_3.steer, vesc_3.PID.pid_out);
 
 			Remote_Analysis();
 			/* 单次触发 */
@@ -231,6 +236,50 @@ void Remote(void *pvParameters)
       }
 		vTaskDelayUntil(&xLastWakeTime,2);
 	}
+}
+void Hit_Task(void *pvParameters)
+{
+TickType_t Last_wake_time = xTaskGetTickCount();
+for(;;)
+	{
+    key1 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11);
+		key2 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
+		key3 = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13);
+		if(key1 == GPIO_PIN_SET || key2 == GPIO_PIN_SET || key3 == GPIO_PIN_SET)
+			{
+			flag = 1;	//这里做自动发球，手动发球方式暂存（chassis.c）
+			if(flag == 1)
+			  {
+				hit_ball_trigger = 1;
+	       }
+	    }
+		 if(hit_ball_trigger == 1)
+			{
+//此为测试使用
+			  	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIOA8_State);
+			  	HAL_GPIO_WritePin(GPIOC,GPIO_PIN_9,GPIOC9_State);
+//			    //启动电磁阀门进行击球				
+//					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
+//					HAL_GPIO_WritePin(GPIOC,GPIO_PIN_9,GPIO_PIN_SET);
+//					vTaskDelay(500);
+//					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
+//					HAL_GPIO_WritePin(GPIOC,GPIO_PIN_9,GPIO_PIN_RESET);
+//					hit_ball_trigger = 0;
+//					flag = 2;
+			}
+
+
+	vTaskDelayUntil(&Last_wake_time, pdMS_TO_TICKS(5));
+  }
+}
+
+
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+
+
+    
 }
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
