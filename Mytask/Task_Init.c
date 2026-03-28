@@ -133,73 +133,71 @@ VESC_INIT vesc_3 ={
 
 void Remote(void *pvParameters)
 {
-	portTickType xLastWakeTime = xTaskGetTickCount();
+    portTickType xLastWakeTime = xTaskGetTickCount();
 
-	vesc_1.PID.Kp =2.5f;
-	vesc_1.PID.Ki = 0.05f;
-	vesc_1.PID.Kd = 20.0f;
-	vesc_1.PID.limit = 10000.0f;
-	vesc_1.PID.output_limit = 40.0f;
-	vesc_2.PID.Kp =2.5f;
-	vesc_2.PID.Ki = 0.05f;
-	vesc_2.PID.Kd = 20.0f;
-	vesc_2.PID.limit = 10000.0f;
-	vesc_2.PID.output_limit = 40.0f;
-	vesc_3.PID.Kp =2.5f;
-	vesc_3.PID.Ki = 0.05f;
-	vesc_3.PID.Kd = 20.0f;
-	vesc_3.PID.limit = 100000.0f;
-	vesc_3.PID.output_limit = 40.0f;
-	vesc_1.dead_area = 5.0f;
-	vesc_2.dead_area = 5.0f;
-	vesc_3.dead_area = 5.0f;
-    PID_EREOR_Init(&vesc_1.PID_ERROR,vesc_1.PID.Kp,vesc_1.PID.Ki,vesc_1.PID.Kd,vesc_1.PID.output_limit,vesc_1.PID.limit,vesc_1.dead_area,0.0f);
-   	PID_EREOR_Init(&vesc_2.PID_ERROR,vesc_2.PID.Kp,vesc_2.PID.Ki,vesc_2.PID.Kd,vesc_2.PID.output_limit,vesc_2.PID.limit,vesc_2.dead_area,0.0f);
-    PID_EREOR_Init(&vesc_3.PID_ERROR,vesc_3.PID.Kp,vesc_3.PID.Ki,vesc_3.PID.Kd,vesc_3.PID.output_limit,vesc_3.PID.limit,vesc_3.dead_area,0.0f);
+    vesc_1.PID.Kp =2.5f;
+   	vesc_1.PID.Ki = 0.05f;
+	  vesc_1.PID.Kd = 20.0f;
+    vesc_1.PID.limit = 10000.0f;
+	  vesc_1.PID.output_limit = 40.0f;
+    vesc_2.PID.Kp =2.5f;
+	  vesc_2.PID.Ki = 0.05f;
+  	vesc_2.PID.Kd = 20.0f;
+    vesc_2.PID.limit = 10000.0f;
+  	vesc_2.PID.output_limit = 40.0f;
+    vesc_3.PID.Kp =2.5f;
+	  vesc_3.PID.Ki = 0.05f;
+  	vesc_3.PID.Kd = 20.0f;
+    vesc_3.PID.limit = 100000.0f;
+	  vesc_3.PID.output_limit = 40.0f;
+    for(;;)
+    {
+        v1 = -Remote_Control.Ex*0.5f + Remote_Control.Ey*(sqrt(3.0f)/2.0) + LENGTH * Remote_Control.Eomega;
+        v2 = -Remote_Control.Ex*0.5f - Remote_Control.Ey*(sqrt(3.0f)/2.0) + LENGTH * Remote_Control.Eomega;
+        v3 =  Remote_Control.Ex + LENGTH * Wz;
 
-	for(;;)
-	{
+        wheel_one   = -(int16_t)(v1 / (2.0f * PI * WHEEL_RADIUS));
+        wheel_two   =  (int16_t)(v2 / (2.0f * PI * WHEEL_RADIUS));
+        wheel_three = -(int16_t)(v3 / (2.0f * PI * WHEEL_RADIUS));
 
-		
-		v1 = -Remote_Control.Ex*0.5f+ Remote_Control.Ey*(sqrt (3.0f)/2.0)+LENGTH * Remote_Control.Eomega;
-		v2 = -Remote_Control.Ex*0.5f- Remote_Control.Ey*(sqrt (3.0f)/2.0)+LENGTH * Remote_Control.Eomega;
-        v3 =  Remote_Control.Ex +LENGTH * Wz;
+        float wheel1_actual = vesc_1.steer.epm / 7.0f / 3.4f;
+        float wheel2_actual = vesc_2.steer.epm / 7.0f / 3.4f;
+        float wheel3_actual = vesc_3.steer.epm / 7.0f / 3.4f;
 
-		wheel_one=  -(int16_t)((v1 / (2.0f * PI * WHEEL_RADIUS)) );
-		wheel_two=   (int16_t)((v2 / (2.0f * PI * WHEEL_RADIUS)) );
-		wheel_three=-(int16_t)((v3 / (2.0f * PI * WHEEL_RADIUS)) );
-			
-		PID_Control2((float)((float)vesc_1.steer.epm / 7.0f/(3.4f)), (0   ), &vesc_1.PID);
-		PID_Control2((float)((float)vesc_2.steer.epm / 7.0f/(3.4f)), (0   ), &vesc_2.PID);
-		PID_Control2((float)((float)vesc_3.steer.epm / 7.0f/(3.4f)), (0 ), &vesc_3.PID);
+        float roll  = JY61.Angle.Roll;//foreward
+        float pitch = JY61.Angle.Pitch;//left_right
+        float yaw_rate = JY61.AngularVelocity.Z;//w
+        float accX = JY61.Acceleration.X;//a
+        float accY = JY61.Acceleration.Y;
 
-		
-	    VESC_SetCurrent(&vesc_1.steer, vesc_1.PID.pid_out);
+        bool slip1 = (fabs(wheel_one - wheel1_actual) > 0.1f * fabs(wheel_one)) ||
+                     (fabs(roll) > 3.0f) || (fabs(pitch) > 3.0f) || (fabs(yaw_rate) > 3.0f);
+        bool slip2 = (fabs(wheel_two - wheel2_actual) > 0.1f * fabs(wheel_two)) ||
+                     (fabs(roll) > 3.0f) || (fabs(pitch) > 3.0f) || (fabs(yaw_rate) > 3.0f);
+        bool slip3 = (fabs(wheel_three - wheel3_actual) > 0.1f * fabs(wheel_three)) ||
+                     (fabs(roll) > 3.0f) || (fabs(pitch) > 3.0f) || (fabs(yaw_rate) > 3.0f);
+
+        PID_Control2(wheel1_actual, wheel_one, &vesc_1.PID);
+        PID_Control2(wheel2_actual, wheel_two, &vesc_2.PID);
+        PID_Control2(wheel3_actual, wheel_three, &vesc_3.PID);
+
+        if(slip1) vesc_1.PID.pid_out *= 0.5f;
+        if(slip2) vesc_2.PID.pid_out *= 0.5f;
+        if(slip3) vesc_3.PID.pid_out *= 0.5f;
+
+        VESC_SetCurrent(&vesc_1.steer, vesc_1.PID.pid_out);
         VESC_SetCurrent(&vesc_2.steer, vesc_2.PID.pid_out);
-	    VESC_SetCurrent(&vesc_3.steer, vesc_3.PID.pid_out);
+        VESC_SetCurrent(&vesc_3.steer, vesc_3.PID.pid_out);
 
-			Remote_Analysis();
-			/* µ¥´Î´¥·¢ */
-			if (KEY_RISING_EDGE(Remote_Control.First, Remote_Control.Second, Left_Switch_Up))
-			{
-				chassis_mode = REMOTE;
-			}
-			if (KEY_RISING_EDGE(Remote_Control.First, Remote_Control.Second, Left_Switch_Down))
-			{
-				chassis_mode = AUTO;
-			}
-      
-      if(chassis_mode == REMOTE)
-      {
-//        chassis.exp_vel.x = Remote_Control.Ex;
-//        chassis.exp_vel.y = Remote_Control.Ey;
-//        chassis.exp_vel.z = Remote_Control.Eomega;
-      }else if(chassis_mode == AUTO)
-      {
-        
-      }
-		vTaskDelayUntil(&xLastWakeTime,2);
-	}
+        Remote_Analysis();
+
+        if(KEY_RISING_EDGE(Remote_Control.First, Remote_Control.Second, Left_Switch_Up))
+            chassis_mode = REMOTE;
+        if(KEY_RISING_EDGE(Remote_Control.First, Remote_Control.Second, Left_Switch_Down))
+            chassis_mode = AUTO;
+
+        vTaskDelayUntil(&xLastWakeTime, 2);
+    }
 }
 //-----------------------------Hit_Task------------------------------------------
 void Hit_Task(void *pvParameters)
@@ -296,3 +294,4 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
       __HAL_DMA_DISABLE_IT(huart5.hdmarx, DMA_IT_HT);
     }
 }
+
