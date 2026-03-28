@@ -29,6 +29,7 @@ void Task_Init()
 				4,
 				&Hit_Task_Handle); 
 }
+//-------------------------Remote_Analysis--------------------------------
 static void Key_Parse(uint32_t key, hw_key_t *out)
 {
     out->Right_Switch_Up     = (key & KEY_Right_Switch_Up)     ? 1 : 0;
@@ -109,6 +110,7 @@ CommPackRecv_Cb  recv_cb = MyRecvCallback;
           }
       }
   }
+	//-------------------------------Remote_Move----------------------------------------
 	 //µç»úÇý¶¯
 VESC_INIT vesc_1 ={
 	.steer.motor_id = 0x01,
@@ -199,6 +201,7 @@ void Remote(void *pvParameters)
 		vTaskDelayUntil(&xLastWakeTime,2);
 	}
 }
+//-----------------------------Hit_Task------------------------------------------
 void Hit_Task(void *pvParameters)
 {
 TickType_t Last_wake_time = xTaskGetTickCount();

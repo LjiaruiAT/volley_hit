@@ -31,7 +31,7 @@
 void Task_Init(void);
 
 //函数定义->结构体->变量
-//-------------------------------------------遥控器结构体及变量
+//-------------------------------------------遥控器结构体及变量-----------------------------------------------------------------
 void Remote_Jy61(void *pvParameters);
 TaskHandle_t Remote_Jy61_Task_Handle;
 void Remote_Analysis();
@@ -82,7 +82,7 @@ extern SemaphoreHandle_t remote_semaphore;
 extern SemaphoreHandle_t Remote_semaphore;
 extern JY61_Typedef JY61;
 extern ChassisMode chassis_mode;
-//--------------------------------底盘控制
+//--------------------------------底盘控制-------------------------------------------------------------------------
 void Remote(void *pvParameters);
 TaskHandle_t Remote_Handle;
 typedef struct
@@ -111,7 +111,7 @@ volatile float wheel_one = 0.0f;
 volatile float wheel_two = 0.0f; 
 volatile float wheel_three=0.0f; 
 
-//------------------------------击球控制
+//------------------------------击球控制--------------------------------------------------------------------------------
 TaskHandle_t Hit_Task_Handle;
 void Hit_Task(void *pvParameters);
 #define C_OFFSET_Y   0.0645f     // C?????????е?y
