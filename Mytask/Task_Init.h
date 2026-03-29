@@ -32,7 +32,6 @@ void Task_Init(void);
 
 //函数定义->结构体->变量
 //-------------------------------------------遥控器结构体及变量-----------------------------------------------------------------
-void Remote_Jy61(void *pvParameters);
 TaskHandle_t Remote_Jy61_Task_Handle;
 void Remote_Analysis();
 
@@ -132,7 +131,7 @@ GPIO_PinState GPIOA8_State = GPIO_PIN_SET;
 GPIO_PinState GPIOC9_State = GPIO_PIN_SET;
 int take = 1;
 TaskHandle_t Hit_Task_Handle;
-GPIO_PinState key1, key2, key3;
+GPIO_PinState feel_1, feel_2, feel_3, feel_4;
 uint8_t hit_ball_trigger = 0;
 uint8_t flag = 0;
 void Hit_Task(void *pvParameters);
