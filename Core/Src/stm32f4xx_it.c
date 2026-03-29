@@ -25,6 +25,8 @@
 #include "Task_Init.h"
 #include "semphr.h"
 #include "dataFrame.h"
+#include "semphr.h"
+#include "JY61.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -193,7 +195,6 @@ void EXTI4_IRQHandler(void)
   /* USER CODE END EXTI4_IRQn 1 */
 }
 
-
 /**
   * @brief This function handles DMA1 stream0 global interrupt.
   */
@@ -357,10 +358,8 @@ void UART4_IRQHandler(void)
 {
   /* USER CODE BEGIN UART4_IRQn 0 */
 	HAL_UART_DMAStop(&huart4);
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-  xSemaphoreGiveFromISR(Jy61_semaphore, &xHigherPriorityTaskWoken);
-  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	HAL_UART_Receive_DMA(&huart4, usart4_dma_buff, sizeof(usart4_dma_buff));
+	JY61_Receive(&JY61, usart4_dma_buff, sizeof(JY61));
   /* USER CODE END UART4_IRQn 0 */
   HAL_UART_IRQHandler(&huart4);
   /* USER CODE BEGIN UART4_IRQn 1 */
