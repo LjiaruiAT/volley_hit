@@ -49,23 +49,14 @@ static void Key_Parse(uint32_t key, hw_key_t *out)
 }
 void Remote_Analysis()
 {
-    if(xSemaphoreTake(Remote_semaphore, pdMS_TO_TICKS(200)) == pdTRUE)
-    {
-      /* 1. 保存上一帧 */
-      Remote_Control.Second = Remote_Control.First;
-      /* 2. 解析当前按键 */
-      Key_Parse(recv_pack.Key, &Remote_Control.First);
-
-      Remote_Control.Ex = recv_pack.rocker[0] / 1847.0f *MAX_ROBOT_VEL;
-      Remote_Control.Ey = recv_pack.rocker[1] / 1847.0f *MAX_ROBOT_VEL;
-      Remote_Control.Eomega = recv_pack.rocker[2] / 1847.0f * MAX_ROBOT_OMEGA;
-    }else {
-      Remote_Control.Ex = 0;
-      Remote_Control.Ey = 0;
-      Remote_Control.Eomega = 0;
-
-      memset(&Remote_Control.First, 0, sizeof(Remote_Control.First));
-    }
+	/* 1. 保存上一帧 */
+	Remote_Control.Second = Remote_Control.First;
+	/* 2. 解析当前按键 */
+	Key_Parse(recv_pack.Key, &Remote_Control.First);
+	
+	Remote_Control.Ex = recv_pack.rocker[1] / 1977.0f *MAX_ROBOT_VEL;
+	Remote_Control.Ey = recv_pack.rocker[0] / 1798.0f *MAX_ROBOT_VEL;
+	Remote_Control.Eomega = recv_pack.rocker[2] / 1847.0f * MAX_ROBOT_OMEGA;
 }
 void Rocker_Filter(PackControl_t *data)
 {
@@ -85,9 +76,6 @@ void MyRecvCallback(uint8_t *src, uint16_t size, void *user_data)
     memcpy(&recv_buff, src, size);
     memcpy(&recv_pack, recv_buff, sizeof(recv_pack));
     Rocker_Filter(&recv_pack);
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xSemaphoreGiveFromISR(Remote_semaphore, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 CommPackRecv_Cb  recv_cb = MyRecvCallback;
 
@@ -160,36 +148,37 @@ void Remote(void *pvParameters)
       g_comm_handle = Comm_Init(&huart5);
       RemoteCommInit(NULL);
       register_comm_recv_cb(recv_cb, 0x01, &recv_pack);
-    vesc_1.PID.Kp =0.0f;
-   	vesc_1.PID.Ki = 0.0f;
-	vesc_1.PID.Kd = 0.0f;
+    vesc_1.PID.Kp = 0.3f;
+   	vesc_1.PID.Ki = 0.0005f;
+	vesc_1.PID.Kd = 1.5f;
     vesc_1.PID.limit = 10000.0f;
 	vesc_1.PID.output_limit = 40.0f;
-    vesc_2.PID.Kp =0.0f;
-	vesc_2.PID.Ki = 0.0f;
-  	vesc_2.PID.Kd = 0.0f;
+    vesc_2.PID.Kp =0.3f;
+	vesc_2.PID.Ki = 0.0005f;
+  	vesc_2.PID.Kd = 1.5f;
     vesc_2.PID.limit = 10000.0f;
   	vesc_2.PID.output_limit = 40.0f;
-    vesc_3.PID.Kp =0.0f;
-	vesc_3.PID.Ki = 0.0f;
-  	vesc_3.PID.Kd = 0.0f;
+    vesc_3.PID.Kp =0.3f;
+	vesc_3.PID.Ki = 0.0005f;
+  	vesc_3.PID.Kd = 1.5f;
     vesc_3.PID.limit = 100000.0f;
 	vesc_3.PID.output_limit = 40.0f;
     for(;;)
     {
-        v1 = -Remote_Control.Ex*0.5f + Remote_Control.Ey*(sqrt(3.0f)/2.0) + LENGTH * Remote_Control.Eomega;
-        v2 = -Remote_Control.Ex*0.5f - Remote_Control.Ey*(sqrt(3.0f)/2.0) + LENGTH * Remote_Control.Eomega;
-        v3 =  Remote_Control.Ex + LENGTH * Wz;
+			Remote_Analysis();
+        v1 = -Remote_Control.Ex*0.5f - Remote_Control.Ey*(sqrt(3.0f)/2.0) + LENGTH * Remote_Control.Eomega;
+        v2 = -Remote_Control.Ex*0.5f + Remote_Control.Ey*(sqrt(3.0f)/2.0) + LENGTH * Remote_Control.Eomega;
+        v3 =  Remote_Control.Eomega + LENGTH * Wz;
 
-        wheel_one   = -(int16_t)(v1 / (2.0f * PI * WHEEL_RADIUS));
-        wheel_two   =  (int16_t)(v2 / (2.0f * PI * WHEEL_RADIUS));
-        wheel_three = -(int16_t)(v3 / (2.0f * PI * WHEEL_RADIUS));
+        wheel_one   = -(v1 / (2.0f * PI * WHEEL_RADIUS));
+        wheel_two   =  (v2 / (2.0f * PI * WHEEL_RADIUS));
+        wheel_three = -(v3 / (2.0f * PI * WHEEL_RADIUS));
 
-        float wheel1_actual = vesc_1.steer.epm / 7.0f / 3.4f;
-        float wheel2_actual = vesc_2.steer.epm / 7.0f / 3.4f;
-        float wheel3_actual = vesc_3.steer.epm / 7.0f / 3.4f;
+        float wheel1_actual = (float)vesc_1.steer.epm / 7.0f / 3.4f;
+        float wheel2_actual = (float)vesc_2.steer.epm / 7.0f / 3.4f;
+        float wheel3_actual = (float)vesc_3.steer.epm / 7.0f / 3.4f;
 
-        float roll  = JY61.Angle.Roll;//foreward
+        float roll  = JY61.Angle.Roll;//front
         float pitch = JY61.Angle.Pitch;//left_right
         float yaw_rate = JY61.AngularVelocity.Z;//w
         float accX = JY61.Acceleration.X;//a
@@ -206,15 +195,24 @@ void Remote(void *pvParameters)
         PID_Control2(wheel2_actual, wheel_two, &vesc_2.PID);
         PID_Control2(wheel3_actual, wheel_three, &vesc_3.PID);
 
-        if(slip1) vesc_1.PID.pid_out *= 0.5f;
-        if(slip2) vesc_2.PID.pid_out *= 0.5f;
-        if(slip3) vesc_3.PID.pid_out *= 0.5f;
-
+//        if(slip1) vesc_1.PID.pid_out *= 0.5f;
+//        if(slip2) vesc_2.PID.pid_out *= 0.5f;
+//        if(slip3) vesc_3.PID.pid_out *= 0.5f;
+//        vesc_1.PID.pid_out = vesc_1.PID.pid_out*3;
+//				vesc_2.PID.pid_out = vesc_2.PID.pid_out*3;
+//				vesc_3.PID.pid_out = vesc_3.PID.pid_out*3;
         VESC_SetCurrent(&vesc_1.steer, vesc_1.PID.pid_out);
         VESC_SetCurrent(&vesc_2.steer, vesc_2.PID.pid_out);
         VESC_SetCurrent(&vesc_3.steer, vesc_3.PID.pid_out);
+			if(recv_pack.rocker[0] == 0 && recv_pack.rocker[1] == 0 &&recv_pack.rocker[2] == 0 )
+			{
+        Remote_Control.Ex = 0;
+				Remote_Control.Ey = 0;
+				Remote_Control.Eomega = 0;
 
-        Remote_Analysis();
+				//按键状态清零
+				memset(&recv_pack.Key, 0, sizeof(uint32_t));
+		 	}
 
         if(KEY_RISING_EDGE(Remote_Control.First, Remote_Control.Second, Left_Switch_Up))
             chassis_mode = REMOTE;
@@ -239,8 +237,10 @@ for(;;)
 		if(feel_1 == GPIO_PIN_SET || feel_2 == GPIO_PIN_SET || feel_3 == GPIO_PIN_SET || feel_4 == GPIO_PIN_SET)
 		{
 					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
-					vTaskDelay(1000);
+					HAL_GPIO_WritePin(GPIOC,GPIO_PIN_9,GPIO_PIN_SET);
+					vTaskDelay(800);
 					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC,GPIO_PIN_9,GPIO_PIN_RESET);
 			}
 
 

@@ -34,7 +34,8 @@ void Task_Init(void);
 //-------------------------------------------遥控器结构体及变量-----------------------------------------------------------------
 TaskHandle_t Remote_Jy61_Task_Handle;
 void Remote_Analysis();
-
+void Remote_update(void *pvParameters);
+TaskHandle_t Remote_update_handle;
 typedef struct{
 	uint8_t Left_Key_Up;         
 	uint8_t Left_Key_Down;       
