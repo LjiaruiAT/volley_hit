@@ -1,45 +1,22 @@
-# Keil MDK-ARM build artifacts and temporary files
-Volley_ok/
-**/Listings/
-**/Objects/
-**/build/
-**/bin/
-**/obj/
-**/out/
-*.o
-*.d
-*.crf
-*.axf
-*.hex
-*.htm
-*.map
-*.lnp
-*.sct
+# local editor / workspace files
+/.vscode/
+*.code-workspace
+/.settings
+/.eide/log
+/.eide.usr.ctx.json
+
+# build output
+/build
+/bin
+/obj
+/out
 *.lst
-*.obj
-*.lib
-*.dep
-*.iex
-*.build_log.htm
+
+# Keil/MDK user-specific files
 *.uvguix.*
-*.uvoptx
-*.scvd
 JLinkLog.txt
 JLinkSettings.ini
 
-# IDE files
-.vscode/
-.settings/
-.eide/
-.eide.usr.ctx.json
+# eide template
 *.ept
 *.eide-template
-
-# Other temporary files
-*.bak
-*.Bak
-*.tmp
-*.__i
-*._ia
-*._it
-*._ip
