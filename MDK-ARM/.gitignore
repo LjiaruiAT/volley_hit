@@ -1,15 +1,45 @@
-# dot files
-/.vscode/launch.json
-/.settings
-/.eide/log
-/.eide.usr.ctx.json
+# Keil MDK-ARM build artifacts and temporary files
+Volley_ok/
+**/Listings/
+**/Objects/
+**/build/
+**/bin/
+**/obj/
+**/out/
+*.o
+*.d
+*.crf
+*.axf
+*.hex
+*.htm
+*.map
+*.lnp
+*.sct
+*.lst
+*.obj
+*.lib
+*.dep
+*.iex
+*.build_log.htm
+*.uvguix.*
+*.uvoptx
+*.scvd
+JLinkLog.txt
+JLinkSettings.ini
 
-# project out
-/build
-/bin
-/obj
-/out
-
-# eide template
+# IDE files
+.vscode/
+.settings/
+.eide/
+.eide.usr.ctx.json
 *.ept
 *.eide-template
+
+# Other temporary files
+*.bak
+*.Bak
+*.tmp
+*.__i
+*._ia
+*._it
+*._ip
