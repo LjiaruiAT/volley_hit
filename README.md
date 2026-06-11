@@ -282,7 +282,6 @@ volley_hit/
 ## 📝 作者
 
 - **IMU 打滑补偿 / 遥控逻辑 / 气缸控制**：刘家瑞
-- **底盘框架 (AutoPilot / ForceChassis)**：刘远钊
 - **RMLib 基础库**：Yao (KDRobot)
 
 ---
