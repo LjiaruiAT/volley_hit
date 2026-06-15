@@ -72,8 +72,6 @@ PackControl_t recv_pack;
 Remote_Handle_t Remote_Control; //取出遥控器数据
 //Chassis_t chassis;
 uint8_t recv_buff[20] = {0};
-uint8_t usart4_dma_buff[30];
-uint8_t usart5_dma_buff[30];
 float rocker_filter[4] = {0};
 
 #define MAX_ROBOT_OMEGA ANGLE2RAD(30.0f)
@@ -94,23 +92,40 @@ typedef struct
 }VESC_INIT;
 
 #define PI 3.14159265359f
-#define MAX_VELOCITY 10.0f	  // 底盘最大速度
+#define MAX_VELOCITY 15.0f	  // 底盘最大速度
 #define MAX_OMEGA PI*10	 	 //最大角速度
 #define LENGTH 0.457f	 	//底盘中心到轮子的距离
 #define WHEEL_RADIUS 0.075f  //轮的半径
 #define MODE_t  1		  //等于0为漫反射开关模式，1为摄像头模式
 #define ANGLE2RAD(x) (x) * PI / 180.0f
 #define MAX_ROBOT_VEL 5.0f // m/s
-float Vx =0;  
-float Vy =0;  
-float Wz =0;  
+Remote_Handle_t Remote_Control;
+uint8_t usart4_dma_buff[30];
+uint8_t usart5_dma_buff[60];
+float Vx = 0;
+float Vy = 0;
+float Wz = 0;
 volatile float v1 = 0.0f;
 volatile float v2 = 0.0f;
 volatile float v3 = 0.0f;
-volatile float wheel_one = 0.0f; 
-volatile float wheel_two = 0.0f; 
-volatile float wheel_three=0.0f; 
+volatile float wheel_one = 0.0f;
+volatile float wheel_two = 0.0f;
+volatile float wheel_three = 0.0f;
+#define Deadzone_Z 0.09f
+  #define GYRO_LPF_ALPHA      0.35f   // 陀螺仪原始值低通系数 (0~1)
+  #define SLIP_LPF_ALPHA      0.50f   // 滑移量滤波系数
+  #define CORR_LPF_ALPHA      0.55f   // 校正输出滤波系数
 
+  #define GYRO_DEADZONE       0.25f   // 陀螺仪死区 (°/s)
+  #define SLIP_DEADZONE       0.30f   // 滑移死区 (°/s)
+  #define CORR_OUT_DEADZONE   0.25f   // 校正输出死区
+
+  #define CORR_OUT_MAX        6.0f    // 校正输出上限
+  #define SLIP_THRESHOLD      0.6f    // 打滑判定阈值 (°/s)
+
+  #define WHEEL3_GRIP_RATIO   0.55f   // 轮3附着力比例（<1 表示附着力差）
+  #define WHEEL1_GRIP_RATIO   1.0f    // 轮1附着力比例
+  #define WHEEL2_GRIP_RATIO   1.0f    // 轮2附着力比例
 //------------------------------击球控制--------------------------------------------------------------------------------
 TaskHandle_t Hit_Task_Handle;
 void Hit_Task(void *pvParameters);
@@ -127,14 +142,19 @@ typedef struct
     float exp_kp;
     float exp_kd;
 }exp_param;
+extern TaskHandle_t Remote_JY61_Handle;
+void Remote_JY61(void *pvParameters);
 
-GPIO_PinState GPIOA8_State = GPIO_PIN_SET;
+GPIO_PinState GPIOA8_State= GPIO_PIN_SET;
 GPIO_PinState GPIOC9_State = GPIO_PIN_SET;
+GPIO_PinState GPIOC4_State = GPIO_PIN_SET;
+GPIO_PinState GPIOC5_State = GPIO_PIN_SET;
+GPIO_PinState GPIOB0_State = GPIO_PIN_SET;
+GPIO_PinState GPIOB1_State = GPIO_PIN_SET;
 int take = 1;
 TaskHandle_t Hit_Task_Handle;
 GPIO_PinState feel_1, feel_2, feel_3, feel_4;
 uint8_t hit_ball_trigger = 0;
 uint8_t flag = 0;
-void Hit_Task(void *pvParameters);
 #define KEY_RISING_EDGE(cur, last, field)  ((cur.field == 1) && (last.field == 0))
 #endif
